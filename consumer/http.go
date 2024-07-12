@@ -72,6 +72,12 @@ type MockHTTPProviderConfig struct {
 	// TLS enables a mock service behind a self-signed certificate
 	// TODO: document and test this
 	TLS bool
+
+	// NotWritePactFile doesn't write the pact file at the end of the provider test.
+	NotWritePactFile bool
+
+	// NotExecuteIntegrationTest doesn't execute integration test in the provider test.
+	NotExecuteIntegrationTest bool
 }
 
 // httpMockProvider is the entrypoint for http consumer tests
@@ -129,7 +135,9 @@ func (p *httpMockProvider) configure() error {
 // Will cleanup interactions between tests within a suite
 // and write the pact file if successful
 func (p *httpMockProvider) ExecuteTest(t *testing.T, integrationTest func(MockServerConfig) error) error {
-	log.Println("[DEBUG] pact verify")
+	if !p.config.NotExecuteIntegrationTest {
+		log.Println("[DEBUG] pact verify")
+	}
 
 	var err error
 	if p.config.AllowedMockServerPorts != "" && p.config.Port <= 0 {
@@ -148,29 +156,35 @@ func (p *httpMockProvider) ExecuteTest(t *testing.T, integrationTest func(MockSe
 		return err
 	}
 
-	// Run the integration test
-	err = integrationTest(MockServerConfig{
-		Port:      p.config.Port,
-		Host:      p.config.Host,
-		TLSConfig: GetTLSConfigForTLSMockServer(),
-	})
+	if !p.config.NotExecuteIntegrationTest {
+		// Run the integration test
+		err = integrationTest(MockServerConfig{
+			Port:      p.config.Port,
+			Host:      p.config.Host,
+			TLSConfig: GetTLSConfigForTLSMockServer(),
+		})
 
-	res, mismatches := p.mockserver.Verify(p.config.Port, p.config.PactDir)
-	p.displayMismatches(t, mismatches)
+		res, mismatches := p.mockserver.Verify(p.config.Port, p.config.PactDir)
+		p.displayMismatches(t, mismatches)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
 
-	if !res {
-		return fmt.Errorf("pact validation failed: %+v %+v", res, mismatches)
-	}
+		if !res {
+			return fmt.Errorf("pact validation failed: %+v %+v", res, mismatches)
+		}
 
-	if len(mismatches) > 0 {
-		return fmt.Errorf("pact validation failed: %+v", mismatches)
+		if len(mismatches) > 0 {
+			return fmt.Errorf("pact validation failed: %+v", mismatches)
+		}
 	}
 
 	p.mockserver.CleanupPlugins()
+
+	if p.config.NotWritePactFile {
+		return nil
+	}
 
 	return p.writePact()
 }
