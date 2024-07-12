@@ -657,13 +657,13 @@ func (i *Interaction) GivenWithParameter(state string, params map[string]interfa
 
 	for k, v := range params {
 		cKey := C.CString(k)
-		defer free(cKey)
 		param := stringFromInterface(v)
 		cValue := C.CString(param)
-		defer free(cValue)
 
 		C.pactffi_given_with_param(i.handle, cState, cKey, cValue)
 
+		free(cValue)
+		free(cKey)
 	}
 
 	return i
@@ -692,18 +692,18 @@ func (i *Interaction) WithResponseHeaders(valueOrMatcher map[string][]interface{
 
 func (i *Interaction) withHeaders(part interactionPart, valueOrMatcher map[string][]interface{}) *Interaction {
 	for k, v := range valueOrMatcher {
-
 		cName := C.CString(k)
-		defer free(cName)
 
 		for _, header := range v {
 			value := stringFromInterface(header)
 			cValue := C.CString(value)
-			defer free(cValue)
 
 			C.pactffi_with_header_v2(i.handle, C.int(part), cName, C.int(0), cValue)
+
+			free(cValue)
 		}
 
+		free(cName)
 	}
 
 	return i
@@ -711,17 +711,18 @@ func (i *Interaction) withHeaders(part interactionPart, valueOrMatcher map[strin
 
 func (i *Interaction) WithQuery(valueOrMatcher map[string][]interface{}) *Interaction {
 	for k, values := range valueOrMatcher {
-
 		cName := C.CString(k)
-		defer free(cName)
 
 		for idx, v := range values {
 			value := stringFromInterface(v)
 			cValue := C.CString(value)
-			defer free(cValue)
 
 			C.pactffi_with_query_parameter_v2(i.handle, cName, C.int(idx), cValue)
+
+			free(cValue)
 		}
+
+		free(cName)
 	}
 
 	return i
