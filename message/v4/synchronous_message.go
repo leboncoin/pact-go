@@ -5,8 +5,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/pact-foundation/pact-go/v2/command"
 	"github.com/pact-foundation/pact-go/v2/internal/native"
 	mockserver "github.com/pact-foundation/pact-go/v2/internal/native"
 	logging "github.com/pact-foundation/pact-go/v2/log"
@@ -115,7 +117,7 @@ type SynchronousMessageWithRequestBuilder struct {
 // to go with the content
 // func (m *Message) WithMetadata(metadata MapMatcher) *Message {
 func (m *SynchronousMessageWithRequestBuilder) WithMetadata(metadata map[string]string) *SynchronousMessageWithRequestBuilder {
-	m.messageHandle.WithMetadata(metadata)
+	m.messageHandle.WithRequestMetadata(metadata)
 
 	return m
 }
@@ -164,7 +166,7 @@ type SynchronousMessageWithResponseBuilder struct {
 // to go with the content
 // func (m *Message) WithMetadata(metadata MapMatcher) *Message {
 func (m *SynchronousMessageWithResponseBuilder) WithMetadata(metadata map[string]string) *SynchronousMessageWithResponseBuilder {
-	m.messageHandle.WithMetadata(metadata)
+	m.messageHandle.WithResponseMetadata(metadata)
 
 	return m
 }
@@ -302,6 +304,7 @@ func (m *SynchronousPact) validateConfig() error {
 
 	m.mockserver = native.NewMessageServer(m.config.Consumer, m.config.Provider)
 	m.mockserver.WithSpecificationVersion(mockserver.SPECIFICATION_VERSION_V4)
+	m.mockserver.WithMetadata("pact-go", "version", strings.TrimPrefix(command.Version, "v"))
 
 	return nil
 }
