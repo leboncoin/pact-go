@@ -15,6 +15,8 @@ ci:: docker deps clean bin test pact
 PACT_DOWNLOAD_DIR=/tmp
 ifeq ($(OS),Windows_NT)
 	PACT_DOWNLOAD_DIR=$$TMP
+else
+	export CGO_LDFLAGS?=-L$(PACT_DOWNLOAD_DIR) -Wl,-rpath,$(PACT_DOWNLOAD_DIR)
 endif
 SKIP_RACE?=false
 RACE?=-race

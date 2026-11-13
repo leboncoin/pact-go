@@ -122,7 +122,8 @@ By default, pact-go install will attempt to install in `/usr/local/lib`.
 
 Note this is not user-writable, so `pact-go install` must be run with `sudo`.
 
-An alternative is to install to `/tmp` via `pact-go -l DEBUG install --libDir /tmp`
+An alternative is to install to another directory via `pact-go -l DEBUG install --libDir <dir>`,
+and add it to the linker search path with `CGO_LDFLAGS="-L<dir> -Wl,-rpath,<dir>"`.
 
 #### Windows
 
